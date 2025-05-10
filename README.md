@@ -1,6 +1,6 @@
 # MER-HAN: Multimodal Emotion Recognition with Hybrid Attention Networks
 
-Implementation of the paper **"Multimodal emotion recognition based on audio and text by using hybrid attention networks"** (<https://doi.org/10.1016/j.bspc.2023.105050>) as the course project of **CENG 562 – Machine Learning, Middle East Technical University (METU)**.
+Implementation of the paper **"Multimodal emotion recognition based on audio and text by using hybrid attention networks"** (<https://doi.org/10.1016/j.bspc.2023.105052>) as the course project of **CENG 562 – Machine Learning, Middle East Technical University (METU)**.
 
 The repository reproduces the core ideas of the paper in PyTorch: a dual-stream architecture that encodes speech and text with separate intra-modal attention blocks, fuses them through bi-directional cross-modal attention, and performs global inter-modal reasoning for final emotion classification.
 
