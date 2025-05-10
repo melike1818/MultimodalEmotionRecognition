@@ -1,2 +1,5 @@
 iemocap/
-checkpoints/ 
+checkpoints/
+venv/
+__pycache__/
+wandb/

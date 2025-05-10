@@ -14,6 +14,7 @@ Usage:
 
 import torch
 import numpy as np
+import wandb  # Weights & Biases for tracking evaluation metrics
 from typing import Dict, Any
 from sklearn.metrics import accuracy_score, recall_score, f1_score, confusion_matrix
 from tqdm import tqdm
@@ -120,6 +121,40 @@ class Evaluation:
             "weighted_F1_score": weighted_f1,
             "confusion_matrix": conf_matrix
         }
+
+        # --------------------
+        # Weights & Biases logging
+        # --------------------
+        if self.config.get("wandb", {}).get("use", False):
+            # If no active wandb run exists (e.g., evaluation run launched separately), start one.
+            if wandb.run is None:
+                wandb.init(
+                    project=self.config.get("wandb", {}).get("project", "MER-HAN"),
+                    name=self.config.get("wandb", {}).get("run_name", "evaluation") + "_eval",
+                    config=self.config,
+                )
+
+            wandb.log({
+                "WAR": war,
+                "UAR": uar,
+                "F1_score": macro_f1,
+                "weighted_F1_score": weighted_f1,
+            })
+
+            try:
+                class_names = self.config.get("dataset", {}).get("class_names")
+                cm_plot = wandb.plot.confusion_matrix(
+                    probs=None,
+                    y_true=gt_labels_np,
+                    preds=pred_labels_np,
+                    class_names=class_names,
+                )
+                wandb.log({"confusion_matrix": cm_plot})
+            except Exception:
+                pass
+
+            if wandb.run and wandb.run.name.endswith("_eval"):
+                wandb.finish()
 
         # Log computed metrics.
         logger.info("Evaluation Metrics:")

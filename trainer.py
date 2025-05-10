@@ -16,6 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from typing import Dict, Any
+import wandb  # Weights & Biases for experiment tracking
 
 class Trainer:
     """Trainer class that manages the training loop for the MER-HAN model."""
@@ -58,6 +59,21 @@ class Trainer:
         # Initialize best validation loss for checkpointing.
         self.best_val_loss = float('inf')
 
+        # --------------------
+        # Weights & Biases setup
+        # --------------------
+        # Enable wandb logging only if requested in the config.
+        self.use_wandb: bool = self.config.get("wandb", {}).get("use", False)
+        if self.use_wandb:
+            wandb_init_kwargs = {
+                "project": self.config.get("wandb", {}).get("project", "MER-HAN"),
+                "name": self.config.get("wandb", {}).get("run_name", None),
+                "config": self.config,
+            }
+            self.wandb_run = wandb.init(**wandb_init_kwargs)
+            # Track gradients and model parameters.
+            wandb.watch(self.model, log="all")
+
     def save_checkpoint(self, epoch: int, val_loss: float) -> None:
         """
         Saves the model checkpoint if the validation loss improves.
@@ -74,6 +90,9 @@ class Trainer:
             "val_loss": val_loss
         }
         torch.save(state, checkpoint_path)
+        # Save (and optionally upload) checkpoint to wandb.
+        if getattr(self, "use_wandb", False):
+            wandb.save(checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch} with validation loss: {val_loss:.4f}")
 
     def validate(self) -> float:
@@ -148,8 +167,20 @@ class Trainer:
             # Log epoch statistics.
             print(f"Epoch [{epoch}/{self.epochs}] - Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
 
+            # Log to Weights & Biases.
+            if self.use_wandb:
+                wandb.log({
+                    "epoch": epoch,
+                    "train_loss": avg_train_loss,
+                    "val_loss": avg_val_loss,
+                })
+
             # Checkpoint: Save model if validation loss improved.
             if avg_val_loss < self.best_val_loss:
                 self.best_val_loss = avg_val_loss
                 self.save_checkpoint(epoch, avg_val_loss)
         print("Training complete.")
+
+        # Finalize the wandb run.
+        if self.use_wandb:
+            wandb.finish()

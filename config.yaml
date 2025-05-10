@@ -32,6 +32,9 @@ model:
 
 dataset:
   max_seq_length: 512
+  class_names:
+    IEMOCAP: ["neu", "hap", "sad", "ang"]
+    MELD:    ["neutral", "joy", "surprise", "anger", "sadness", "fear", "disgust"]
   IEMOCAP:
     train_sessions: [1, 2, 3, 4]
     test_sessions: [5]
@@ -51,3 +54,8 @@ hardware:
   device: cuda
 
 random_seed: 42
+
+wandb:
+  use: true
+  project: MER-HAN
+  run_name: trial-001
