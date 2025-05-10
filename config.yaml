@@ -1,0 +1,53 @@
+## config.yaml
+training:
+  learning_rate: 0.0001
+  batch_size: 32
+  epochs: 64
+  optimizer: Adam
+  loss_function: CrossEntropyLoss
+
+model:
+  audio_encoder:
+    type: BiLSTM
+    num_layers: 2
+    hidden_size: 256
+    input_feature_dim: 40
+    frame_width_ms: 25
+    frame_stride_ms: 10
+    mfcc_dim: 40
+    mhsa_heads: 4
+  text_encoder:
+    pretrained_model: bert-base-uncased
+    output_dim: 768
+    mhsa_heads: 4
+  cross_modal_attention:
+    cnn_kernel_size: 1
+    projection_dim: 256
+    num_attention_blocks: 1
+    mhsa_heads: 4
+  classification:
+    num_classes_IEMOCAP: 4
+    num_classes_MELD: 7
+    use_global_inter_modal_attention: true
+
+dataset:
+  max_seq_length: 512
+  IEMOCAP:
+    train_sessions: [1, 2, 3, 4]
+    test_sessions: [5]
+  MELD:
+    train_split: 1039
+    val_split: 114
+    test_split: 280
+
+evaluation:
+  metrics:
+    - WAR
+    - UAR
+    - F1_score
+    - weighted_F1_score  # for MELD dataset
+
+hardware:
+  device: cuda
+
+random_seed: 42
