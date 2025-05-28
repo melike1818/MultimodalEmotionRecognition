@@ -1,8 +1,9 @@
 ## config.yaml
 training:
-  learning_rate: 0.0001
+  learning_rate: 0.00005
   batch_size: 32
   epochs: 64
+  early_stop_patience: 6
   optimizer: Adam
   loss_function: CrossEntropyLoss
 

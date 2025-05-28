@@ -44,6 +44,10 @@ class Trainer:
         self.batch_size: int = int(config["training"].get("batch_size", 32))
         self.random_seed: int = int(config.get("random_seed", 42))
 
+        # Early stopping: number of epochs with no improvement after which training stops.
+        self.early_stop_patience: int = int(config["training"].get("early_stop_patience", 10))
+        self.epochs_no_improve: int = 0  # Counter for epochs without validation loss improvement.
+
         # Set loss function and optimizer.
         self.criterion = nn.CrossEntropyLoss()
         # Optimizer should receive only parameters that require gradients
@@ -181,6 +185,15 @@ class Trainer:
             if avg_val_loss < self.best_val_loss:
                 self.best_val_loss = avg_val_loss
                 self.save_checkpoint(epoch, avg_val_loss)
+                # Reset counter when improvement occurs.
+                self.epochs_no_improve = 0
+            else:
+                self.epochs_no_improve += 1
+
+            # Early stopping check.
+            if self.epochs_no_improve >= self.early_stop_patience:
+                print(f"Early stopping triggered after {self.early_stop_patience} epochs with no improvement.")
+                break
         print("Training complete.")
 
         # Finalize the wandb run.
