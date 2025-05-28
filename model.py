@@ -268,13 +268,27 @@ class GlobalInterModalAttention(nn.Module):
         # Compute attention scores for each time step by dot-product with U.
         # fusion: (B, seq_len, fusion_dim), U: (fusion_dim,)
         scores: torch.Tensor = torch.matmul(fusion, self.U)  # shape: (B, seq_len)
-        # Compute softmax across the sequence dimension.
-        attn_weights: torch.Tensor = F.softmax(scores, dim=1)  # shape: (B, seq_len)
-        attn_weights = attn_weights.unsqueeze(-1)  # shape: (B, seq_len, 1)
-        # Compute weighted sum across the sequence dimension.
-        aggregated: torch.Tensor = torch.sum(fusion * attn_weights, dim=1)  # shape: (B, fusion_dim)
+        # Compute softmax across the sequence dimension to get attention weights.
+        attn_weights: torch.Tensor = F.softmax(scores, dim=1)  # (B, seq_len)
+        attn_weights = attn_weights.unsqueeze(-1)              # (B, seq_len, 1)
+
+        # Attention-weighted aggregation (global inter-modal context vector).
+        aggregated: torch.Tensor = torch.sum(fusion * attn_weights, dim=1)  # (B, fusion_dim)
+
+        # ------------------------------------------------------------------
+        # Residual skip-connection (bypasses the attention computation).
+        # We follow the paper's MEC block that multiplies (⊗) the attention
+        # output with a residual representation of the same dimensionality.
+        # Here we use a simple mean-pool over the temporal axis to obtain the
+        # residual representation r ∈ R^{fusion_dim}.
+        # ------------------------------------------------------------------
+        residual: torch.Tensor = torch.mean(fusion, dim=1)  # (B, fusion_dim)
+
+        # Element-wise gating (⊗) between attention vector and residual path.
+        gated: torch.Tensor = aggregated * residual          # (B, fusion_dim)
+
         # Final classification.
-        logits: torch.Tensor = self.fc(aggregated)  # shape: (B, num_classes)
+        logits: torch.Tensor = self.fc(gated)                # (B, num_classes)
         return logits
 
 # ----------------------------
