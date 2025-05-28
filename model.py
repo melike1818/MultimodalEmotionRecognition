@@ -99,14 +99,22 @@ class TextEncoder(nn.Module):
                         - "pretrained_model": Name of the pretrained BERT model (default: "bert-base-uncased").
                         - "output_dim": Dimension of BERT output (default: 768).
                         - "mhsa_heads": Number of attention heads for local intra-modal attention (default: 4).
+                        - "freeze_bert": Boolean flag to freeze BERT parameters (default: True).
         """
         super(TextEncoder, self).__init__()
         pretrained_model: str = config.get("pretrained_model", "bert-base-uncased")
         output_dim: int = config.get("output_dim", 768)
         mhsa_heads: int = config.get("mhsa_heads", 4)
+        freeze_bert: bool = config.get("freeze_bert", True)
 
         # Load pretrained BERT model.
         self.bert: BertModel = BertModel.from_pretrained(pretrained_model)
+
+        # Freeze BERT parameters if requested.
+        if freeze_bert:
+            for param in self.bert.parameters():
+                param.requires_grad = False
+
         # Local intra-modal self-attention module.
         self.mhsa: nn.MultiheadAttention = nn.MultiheadAttention(
             embed_dim=output_dim,

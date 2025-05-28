@@ -46,7 +46,9 @@ class Trainer:
 
         # Set loss function and optimizer.
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        # Optimizer should receive only parameters that require gradients
+        trainable_params = (p for p in self.model.parameters() if p.requires_grad)
+        self.optimizer = optim.Adam(trainable_params, lr=self.learning_rate)
 
         # DataLoaders.
         self.train_loader = train_loader
